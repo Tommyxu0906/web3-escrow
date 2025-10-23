@@ -20,7 +20,7 @@ pragma solidity ^0.8.20;
  
 contract Escrow {
     /// @dev 一个订单的生命周期状态。此处先给出基础枚举，后续函数会用到。
-    enum Status { None, Created /* Funded, Delivered, Released, Refunded */ }
+    enum Status { None, Created , Funded/* Delivered, Released, Refunded */ }
 
     /**
      * @dev Deal 结构体保存一笔交易的核心元数据。
@@ -48,6 +48,14 @@ contract Escrow {
         uint256 amount,
         uint64  deadline
     );
+
+    /// @dev 买家成功把钱打入合约时触发
+    event FundsDeposited(
+        bytes32 indexed id,
+        address indexed buyer,
+        uint256 amount
+    );
+
 
     /**
      * @notice 创建一笔“待托管”的交易（不收钱，只登记）
@@ -92,4 +100,34 @@ contract Escrow {
         // 发事件，便于前端/脚本拿到 id
         emit EscrowCreated(id, buyer, seller, amount, deadline);
     }
+
+    /**
+    * @notice 买家把约定金额转进合约，订单状态从 Created -> Funded
+    * @param id  createEscrow 返回/事件里拿到的唯一订单 id
+    *
+    * 关键点：
+    * - payable：允许随交易携带 ETH（msg.value）
+    * - 只有登记的 buyer 能存款
+    * - 存款金额必须与 amount 完全一致（避免少打/多打）
+    * - 此时不对外转账，ETH 只“锁”在本合约，后续再 release/refund
+    */
+    function deposit(bytes32 id) external payable {
+        Deal storage d = deals[id];
+
+        // 1) 必须是已创建但未资金托管的订单
+        require(d.status == Status.Created, "bad status");
+
+        // 2) 只有登记的 buyer 可以打钱
+        require(msg.sender == d.buyer, "only buyer");
+
+        // 3) 存款金额必须与约定金额一致
+        require(msg.value == d.amount, "wrong value");
+
+        // 4) 状态切换为 Funded；资金此时已在本合约余额里
+        d.status = Status.Funded;
+
+        // 5) 发事件，便于前端/脚本更新 UI
+        emit FundsDeposited(id, msg.sender, msg.value);
+    }
+
 }

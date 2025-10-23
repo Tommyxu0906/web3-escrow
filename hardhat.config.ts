@@ -1,7 +1,7 @@
-import type { HardhatUserConfig } from "hardhat/config";
-
 import hardhatToolboxMochaEthersPlugin from "@nomicfoundation/hardhat-toolbox-mocha-ethers";
 import { configVariable } from "hardhat/config";
+import type { HardhatUserConfig } from "hardhat/config";
+import "@nomicfoundation/hardhat-ethers";
 
 const config: HardhatUserConfig = {
   plugins: [hardhatToolboxMochaEthersPlugin],

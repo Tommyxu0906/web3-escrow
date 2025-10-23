@@ -6,15 +6,17 @@ import type { TypedContractEvent, TypedDeferredTopicFilter, TypedEventLog, Typed
   
 
   export interface EscrowInterface extends Interface {
-    getFunction(nameOrSignature: "createEscrow" | "deals"): FunctionFragment;
+    getFunction(nameOrSignature: "createEscrow" | "deals" | "deposit"): FunctionFragment;
 
-    getEvent(nameOrSignatureOrTopic: "EscrowCreated"): EventFragment;
+    getEvent(nameOrSignatureOrTopic: "EscrowCreated" | "FundsDeposited"): EventFragment;
 
     encodeFunctionData(functionFragment: 'createEscrow', values: [AddressLike, AddressLike, BigNumberish, BigNumberish]): string;
 encodeFunctionData(functionFragment: 'deals', values: [BytesLike]): string;
+encodeFunctionData(functionFragment: 'deposit', values: [BytesLike]): string;
 
     decodeFunctionResult(functionFragment: 'createEscrow', data: BytesLike): Result;
 decodeFunctionResult(functionFragment: 'deals', data: BytesLike): Result;
+decodeFunctionResult(functionFragment: 'deposit', data: BytesLike): Result;
   }
 
   
@@ -22,6 +24,18 @@ decodeFunctionResult(functionFragment: 'deals', data: BytesLike): Result;
       export type InputTuple = [id: BytesLike, buyer: AddressLike, seller: AddressLike, amount: BigNumberish, deadline: BigNumberish];
       export type OutputTuple = [id: string, buyer: string, seller: string, amount: bigint, deadline: bigint];
       export interface OutputObject {id: string, buyer: string, seller: string, amount: bigint, deadline: bigint };
+      export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>
+      export type Filter = TypedDeferredTopicFilter<Event>
+      export type Log = TypedEventLog<Event>
+      export type LogDescription = TypedLogDescription<Event>
+    }
+
+  
+
+    export namespace FundsDepositedEvent {
+      export type InputTuple = [id: BytesLike, buyer: AddressLike, amount: BigNumberish];
+      export type OutputTuple = [id: string, buyer: string, amount: bigint];
+      export interface OutputObject {id: string, buyer: string, amount: bigint };
       export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>
       export type Filter = TypedDeferredTopicFilter<Event>
       export type Log = TypedEventLog<Event>
@@ -79,6 +93,14 @@ decodeFunctionResult(functionFragment: 'deals', data: BytesLike): Result;
     >
     
 
+    
+    deposit: TypedContractMethod<
+      [id: BytesLike, ],
+      [void],
+      'payable'
+    >
+    
+
 
     getFunction<T extends ContractMethod = ContractMethod>(key: string | FunctionFragment): T;
 
@@ -92,13 +114,23 @@ getFunction(nameOrSignature: 'deals'): TypedContractMethod<
       [[string, string, bigint, bigint, bigint] & {buyer: string, seller: string, amount: bigint, deadline: bigint, status: bigint }],
       'view'
     >;
+getFunction(nameOrSignature: 'deposit'): TypedContractMethod<
+      [id: BytesLike, ],
+      [void],
+      'payable'
+    >;
 
     getEvent(key: 'EscrowCreated'): TypedContractEvent<EscrowCreatedEvent.InputTuple, EscrowCreatedEvent.OutputTuple, EscrowCreatedEvent.OutputObject>;
+getEvent(key: 'FundsDeposited'): TypedContractEvent<FundsDepositedEvent.InputTuple, FundsDepositedEvent.OutputTuple, FundsDepositedEvent.OutputObject>;
 
     filters: {
       
       'EscrowCreated(bytes32,address,address,uint256,uint64)': TypedContractEvent<EscrowCreatedEvent.InputTuple, EscrowCreatedEvent.OutputTuple, EscrowCreatedEvent.OutputObject>;
       EscrowCreated: TypedContractEvent<EscrowCreatedEvent.InputTuple, EscrowCreatedEvent.OutputTuple, EscrowCreatedEvent.OutputObject>;
+    
+
+      'FundsDeposited(bytes32,address,uint256)': TypedContractEvent<FundsDepositedEvent.InputTuple, FundsDepositedEvent.OutputTuple, FundsDepositedEvent.OutputObject>;
+      FundsDeposited: TypedContractEvent<FundsDepositedEvent.InputTuple, FundsDepositedEvent.OutputTuple, FundsDepositedEvent.OutputObject>;
     
     };
   }
